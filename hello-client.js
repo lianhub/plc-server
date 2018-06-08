@@ -19,10 +19,11 @@ requester.on("message", function(reply) {
     process.exit(0);
 });
 
-requester.connect("tcp://localhost:5555");
-//requester.connect("tcp://10.0.0.2:5555");
+//requester.connect("tcp://localhost:5555");
+requester.connect("tcp://10.0.0.2:5555");
 
 console.log("Sending request", 0, '…');
-requester.send("Hello");
+//requester.send("Hello");
+requester.send(JSON.stringify({type: 'stop', file: 'ecat'}) )
 
 process.on('SIGINT', function() {  requester.close(); });

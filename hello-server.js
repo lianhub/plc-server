@@ -11,10 +11,24 @@ try {
 }
 
 var responder = zmq.socket('rep');// socket to talk to clients
-
+var spawn = require('child_process').spawn;
+var ecat
+var plc
 responder.on('message', function(request) {
     console.log("Received request: [", request.toString(), "]");
     // send reply back to client.
+    const message = JSON.parse(request);
+    if (message.type === 'start')
+       ecat = spawn('sudo', ['/opt/etherlab/etc/init.d/ethercat', 'start']);
+    if (message.type === 'stop')
+       ecat = spawn('sudo', ['/opt/etherlab/etc/init.d/ethercat', 'stop']);
+
+    if (message.type === 'estart')
+       plc = spawn('sudo', ['/home/pi/ecat-plc-ads/openplc']);
+    if (message.type === 'estop')
+       plc = spawn('sudo', ['killall', 'openplc']);
+       //plc.kill('SIGKILL');
+
     responder.send("World");
 });
 
