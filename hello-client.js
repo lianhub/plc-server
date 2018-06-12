@@ -14,16 +14,26 @@ console.log("Connecting to hello-world server…");
 var requester = zmq.socket('req');// socket to talk to server
 
 requester.on("message", function(reply) {
-    console.log("Received reply", 0, ": [", reply.toString(), ']');
-    requester.close();
-    process.exit(0);
+    console.log("req/rep reply", ": ", reply.toString());
+    requester.close();    //process.exit(0);
 });
 
-//requester.connect("tcp://localhost:5555");
-requester.connect("tcp://10.0.0.2:5555");
+requester.connect("tcp://localhost:5555");
+//requester.connect("tcp://10.0.0.2:5555");
 
-console.log("Sending request", 0, '…');
-//requester.send("Hello");
+console.log("Sending request", '…');
 requester.send(JSON.stringify({type: 'stop', file: 'ecat'}) )
 
-process.on('SIGINT', function() {  requester.close(); });
+var suber = zmq.socket('sub');// socket to talk to server
+suber.subscribe("")
+suber.on("message", function(reply) {
+    console.log("pub/sub reply", ": ", reply.toString());
+    //suber.close();    //process.exit(0);
+});
+suber.connect("tcp://localhost:5565");
+//suber.connect("tcp://10.0.0.2:5565");
+
+process.on('SIGINT', function() {
+  suber.close();  //requester.close();
+  console.log('\nClosed')
+});

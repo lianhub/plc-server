@@ -10,11 +10,18 @@ try {
     zmq = require('zeromq');
 }
 
+var puber = zmq.socket('pub');// socket to talk to clients
+puber.bind('tcp://*:5565', function(err) {
+   if (err)     console.log(err);
+   else         console.log("Listening on 5565…");
+});
+
 var responder = zmq.socket('rep');// socket to talk to clients
 var spawn = require('child_process').spawn;
 var ecat
 var plc
 responder.on('message', function(request) {
+    responder.send("World");
     console.log("Received request: [", request.toString(), "]");
     // send reply back to client.
     const message = JSON.parse(request);
@@ -24,12 +31,15 @@ responder.on('message', function(request) {
        ecat = spawn('sudo', ['/opt/etherlab/etc/init.d/ethercat', 'stop']);
 
     if (message.type === 'estart')
-       plc = spawn('sudo', ['/home/pi/ecat-plc-ads/openplc']);
+       ecat = spawn('sudo', ['/home/pi/ecat-plc-ads/openplc']);
     if (message.type === 'estop')
-       plc = spawn('sudo', ['killall', 'openplc']);
+       ecat = spawn('sudo', ['killall', 'openplc']);
        //plc.kill('SIGKILL');
 
-    responder.send("World");
+    ecat.stdout.on('data', (data) => {
+      console.log(`${data} `);
+      puber.send(`${data} `);
+    });
 });
 
 responder.bind('tcp://*:5555', function(err) {
@@ -39,4 +49,5 @@ responder.bind('tcp://*:5555', function(err) {
 
 process.on('SIGINT', function() {
   responder.close();
+  puber.close();
 });
